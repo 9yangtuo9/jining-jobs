@@ -41,10 +41,15 @@ export default function Layout() {
         <Outlet />
       </main>
       <footer className="border-t border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-xs text-slate-400 text-center">
-          数据来源：济宁市人社局《标志性产业链重点人才需求蓝皮书（2026版）》、济宁市属事业单位公开招聘公告、汶上县招聘公告、济宁直聘网等公开渠道 ·
-          采集日期 {new Date().getFullYear() >= 2026 ? '2026-09-23' : '2026-09-23'} ·
-          仅供分析参考，不作为求职决策唯一依据
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-xs text-slate-400 text-center space-y-1">
+          <p>
+            数据来源：济宁市人社局《标志性产业链重点人才需求蓝皮书（2026版）》、济宁市属事业单位公开招聘公告、汶上县招聘公告、济宁直聘网等公开渠道 ·
+            采集日期 2026-09-23 ·
+            仅供分析参考，不作为求职决策唯一依据
+          </p>
+          <p className="text-slate-300">
+            本站数据来源于公开的《济宁蓝皮书》及招聘公告，仅作行业分析参考，不提供直接投递服务。求职请认准官方招聘平台，谨防诈骗。
+          </p>
         </div>
       </footer>
     </div>
