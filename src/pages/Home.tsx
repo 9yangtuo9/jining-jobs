@@ -98,7 +98,7 @@ export default function Home() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div className="card p-5 lg:col-span-3">
           <h2 className="text-lg font-semibold text-brand-600 mb-1">各产业链岗位数量</h2>
-          <p className="text-xs text-slate-400 mb-4">按岗位数量降序，共 16 条产业链</p>
+          <p className="text-xs text-slate-400 mb-4">按岗位数量降序，共 {industryData.length} 条产业链</p>
           <ResponsiveContainer width="100%" height={420}>
             <BarChart
               data={industryData}

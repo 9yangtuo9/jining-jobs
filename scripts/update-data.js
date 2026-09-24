@@ -19,7 +19,10 @@ const VALID_CHAINS = new Set([
   '食品', '医药', '新一代信息技术', '造纸和纸制品', '纺织服装',
   '轻工', '煤电', '精细化工', '事业单位', '其他',
 ])
-const PLACEHOLDER_CHAINS = new Set(['济宁直聘', '汶上招聘'])
+// 字符串归一化：去除首尾空白，防止 " 电话客服" 这类脏分类混入
+function norm(v) {
+  return typeof v === 'string' ? v.trim() : (v == null ? '' : v)
+}
 
 // 重新归类规则（按顺序匹配，命中即止）
 const RECLASSIFY_RULES = [
@@ -47,13 +50,19 @@ const RECLASSIFY_RULES = [
 // ---------- 单条记录清洗 ----------
 function cleanJobName(name) {
   if (!name) return { name: '', welfare: '' }
+  // 原始数据中部分岗位名称形如「工作地点 | 岗位名（福利）」，取 | 之后的真实岗位名
+  let raw = norm(name)
+  if (raw.includes('|')) {
+    const parts = raw.split('|').map(s => s.trim()).filter(Boolean)
+    raw = parts[parts.length - 1] || raw
+  }
   const welfareParts = []
-  const cleaned = name.replace(/[（(]([^）)]*)[）)]/g, (_, inner) => {
+  const cleaned = raw.replace(/[（(]([^）)]*)[）)]/g, (_, inner) => {
     welfareParts.push(inner)
     return ''
   }).replace(/[+·、,\s]+$/, '').trim()
   const welfare = welfareParts.filter(p => p.trim()).join('、')
-  return { name: cleaned || name, welfare }
+  return { name: cleaned || raw, welfare }
 }
 
 function standardizeEdu(edu) {
@@ -68,8 +77,9 @@ function standardizeEdu(edu) {
 }
 
 function standardizeMajor(major) {
-  if (!major || ['—', '-', '不限', ''].includes(major)) return null
-  return major
+  const m = norm(major)
+  if (!m || ['—', '-', '不限'].includes(m)) return null
+  return m
 }
 
 function standardizeStar(star) {
@@ -113,10 +123,10 @@ function reclassifyChain(jobName, major, source, currentChain) {
   // source 可能是字符串或数组（已聚合数据再清洗时）
   const srcStr = Array.isArray(source) ? source.join('|') : (source || '')
   if (srcStr.startsWith('济宁市属事业单位')) return '事业单位'
-  if (!PLACEHOLDER_CHAINS.has(currentChain)) {
-    return VALID_CHAINS.has(currentChain) ? currentChain : '其他'
-  }
-  const text = `${jobName || ''} ${major || ''}`
+  // 归一化后命中白名单才保留；白名单之外（含带空格的脏值）一律按关键词重新归类
+  const cur = norm(currentChain)
+  if (VALID_CHAINS.has(cur)) return cur
+  const text = `${jobName || ''} ${Array.isArray(major) ? major.join(' ') : (major || '')}`
   for (const [chain, kws] of RECLASSIFY_RULES) {
     for (const kw of kws) {
       if (text.includes(kw)) return chain
@@ -198,8 +208,10 @@ function aggregate(records) {
   }
 
   const result = []
-  for (const [key, items] of groups) {
-    const [jobName, chain] = key.split('|')
+  for (const items of groups.values()) {
+    // 注意：不要用 key.split('|') 反解字段——岗位名称本身可能含 |，会把名称片段误当成产业链
+    const jobName = items[0]['岗位名称']
+    const chain = items[0]['所属产业链']
 
     const majors = []
     for (const it of items) {
@@ -329,6 +341,12 @@ function main() {
   const rawCount = raw.length
   console.log(`\n读取原始记录: ${rawCount} 条`)
   console.log(`数据采集日期: ${data.data_acquisition_date || '未标注'}`)
+
+  // 输入校验：已清洗数据的输出文件带 raw_total 字段，原始数据没有
+  if (data.raw_total !== undefined) {
+    console.warn('\n[WARN] 输入文件含有 raw_total 字段，疑似“已清洗数据”。')
+    console.warn('       请确认放入 raw_jobs.json 的是未经清洗的原始采集数据。')
+  }
 
   // 1) 单条清洗
   const cleaned = raw.map(cleanRecord)
