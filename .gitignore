@@ -8,6 +8,9 @@ dist/
 raw_jobs.json
 jobs.json
 
+# 原始 PDF 归档（体积大，仅本地保留）
+data/*.pdf
+
 # 清洗报告（每次更新自动生成）
 data_quality_report.md
 
