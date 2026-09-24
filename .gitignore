@@ -4,6 +4,11 @@ node_modules/
 # 构建产物
 dist/
 
+# TypeScript 增量编译产物（tsc -b 生成，不应入库）
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+
 # 原始数据（不入库，只提交清洗后的 src/data/）
 raw_jobs.json
 jobs.json
@@ -32,3 +37,6 @@ Thumbs.db
 
 # Vercel
 .vercel/
+
+.vercel
+.env*
